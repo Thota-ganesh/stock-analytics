@@ -1,4 +1,4 @@
-package io.endeavour;
+package io.endeavour.stocks;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
