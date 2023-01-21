@@ -1,5 +1,7 @@
 package io.endeavour.stocks.controller;
 
+import io.endeavour.stocks.entity.StockFundamentalsEntity;
+import io.endeavour.stocks.entity.StockPriceHistoryEntity;
 import io.endeavour.stocks.service.StockAnalyticsService;
 import io.endeavour.stocks.vo.SectorLookup;
 import io.endeavour.stocks.vo.StocksPriceHistory;
@@ -8,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -61,6 +64,25 @@ public class StockAnalyticsController {
     public List<SectorLookup> getSectorName (@PathVariable("sectorId") int sectorId){
         LOGGER.info("API Inputs are {} ", sectorId);
         return stockAnalyticsService.getSectorName(sectorId);
+    }
+
+    @GetMapping("/stockFundamentals")
+    public List<StockFundamentalsEntity> getStocks (){
+        return stockAnalyticsService.getStocks();
+    }
+
+    // NativeQuery by Limit
+    @GetMapping("/stock-fundamentals/top/{num}/by-market-cap")
+    public List<StockFundamentalsEntity> getTopByMarketCap(@PathVariable("num") int num) {
+        return stockAnalyticsService.getTopByMarketCap(num);
+    }
+
+    @GetMapping("/price-history/{tickerSymbol}/{tradingDate}")
+    public ResponseEntity<StockPriceHistoryEntity> priceHistoryByKey(@PathVariable("tickerSymbol") String tickerSymbol,
+                                                                     @PathVariable("tradingDate")
+                                                                     @DateTimeFormat(pattern = "yyyy-MM-dd")
+                                                                     LocalDate tradingDate){
+        return ResponseEntity.of(stockAnalyticsService.getPriceHistoryByKey(tickerSymbol,tradingDate));
     }
 
 }
