@@ -1,5 +1,6 @@
 package io.endeavour.stocks.service;
 
+import io.endeavour.stocks.StockException;
 import io.endeavour.stocks.dao.LooksupDao;
 import io.endeavour.stocks.dao.PriceHistoryDao;
 import io.endeavour.stocks.dao.StockFundamentalsDao;
@@ -9,6 +10,7 @@ import io.endeavour.stocks.entity.StockPriceHistoryPK;
 import io.endeavour.stocks.repository.StockFundamentalsRepository;
 import io.endeavour.stocks.repository.StockPriceHistoryRepository;
 import io.endeavour.stocks.vo.SectorLookup;
+import io.endeavour.stocks.vo.StockFundamentalsHistory;
 import io.endeavour.stocks.vo.StocksPriceHistory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -65,5 +67,15 @@ public class StockAnalyticsService {
         stockPriceHistoryPK.setTickerSymbol(tickerSymbol);
         stockPriceHistoryPK.setTradingDate(tradingDate);
         return stockPriceHistoryRepository.findById(stockPriceHistoryPK);
+    }
+    public StockFundamentalsHistory getStockFundamentalsHistory(String tickerSymbol, LocalDate fromDate, LocalDate toDate){
+        StockFundamentalsEntity stockFundamentalsEntity = stockFundamentalsRepository.findById(tickerSymbol).
+                orElseThrow(() -> new StockException("Could not find ticker"));
+        List<StocksPriceHistory> priceHistories = priceHistoryDao.getPriceHistory(List.of(tickerSymbol), fromDate, toDate);
+        StockFundamentalsHistory stockFundamentalsHistory = new StockFundamentalsHistory();
+        stockFundamentalsHistory.setMarketCap(stockFundamentalsEntity.getMarketCap());
+        stockFundamentalsHistory.setCurrentRatio(stockFundamentalsEntity.getCurrentRatio());
+        stockFundamentalsHistory.setTradingHistory(priceHistories);
+        return stockFundamentalsHistory;
     }
 }
