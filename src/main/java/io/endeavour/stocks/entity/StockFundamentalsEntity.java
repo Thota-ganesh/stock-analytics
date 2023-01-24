@@ -18,6 +18,16 @@ public class StockFundamentalsEntity {
     private BigDecimal marketCap;
     @Column(name = "CURRENT_RATIO")
     private BigDecimal currentRatio;
+    @Transient
+    private BigDecimal cumulativeReturn;
+
+    public BigDecimal getCumulativeReturn() {
+        return cumulativeReturn;
+    }
+
+    public void setCumulativeReturn(BigDecimal cumulativeReturn) {
+        this.cumulativeReturn = cumulativeReturn;
+    }
 
     public String getTickerSymbol() {
         return tickerSymbol;

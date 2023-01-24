@@ -4,6 +4,7 @@ import io.endeavour.stocks.entity.StockFundamentalsEntity;
 import io.endeavour.stocks.entity.StockPriceHistoryEntity;
 import io.endeavour.stocks.service.StockAnalyticsService;
 import io.endeavour.stocks.vo.SectorLookup;
+import io.endeavour.stocks.vo.SectorLookupHistory;
 import io.endeavour.stocks.vo.StockFundamentalsHistory;
 import io.endeavour.stocks.vo.StocksPriceHistory;
 import org.slf4j.Logger;
@@ -91,6 +92,24 @@ public class StockAnalyticsController {
                                                                  @PathVariable("fromDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fromDate,
                                                                  @PathVariable("toDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate toDate){
         return stockAnalyticsService.getStockFundamentalsHistory(tickerSymbol, fromDate, toDate);
+    }
+
+    @GetMapping("/stock-fundamentals/top/{num}/{fromDate}/{toDate}")
+    public List<StockFundamentalsEntity> getTopStocks(@PathVariable("num") int num,
+                                                      @PathVariable("fromDate")
+                                                      @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fromDate,
+                                                      @PathVariable("toDate")
+                                                          @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate toDate) {
+        return stockAnalyticsService.getTopStocks(num, fromDate, toDate);
+    }
+
+    @GetMapping("/top-stocks/top/{num}/{fromDate}/{toDate}")
+    public  List<SectorLookupHistory> getTopNStocks(@PathVariable("num") int num,
+                                                    @PathVariable("fromDate")
+                                                    @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fromDate,
+                                                    @PathVariable("toDate")
+                                                        @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate toDate) {
+        return stockAnalyticsService.getSectorLookupHistory(num, fromDate, toDate);
     }
 
 }
