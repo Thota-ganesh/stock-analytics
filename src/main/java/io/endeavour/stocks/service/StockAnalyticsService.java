@@ -126,7 +126,7 @@ public class StockAnalyticsService {
 
     public List<SectorLookupHistory> getSectorLookupHistory(int num, LocalDate fromDate, LocalDate toDate) {
         List<StockFundamentalsEntity> stockFundamentals = stockFundamentalsRepository.getAll();
-        List<SectorEntity> sectorEntities = sectorRepository.getAll();
+        List<SectorEntity> sectorEntities = sectorRepository.findAll();
         List<SectorLookupHistory> sectorLookupHistoryList = new ArrayList<>();
 
         List<String> tickersSymbols = stockFundamentals.stream()

@@ -62,4 +62,9 @@ public class CrudController {
         return crudService.getSectorId();
     }
 
+    @GetMapping("/person/address")
+    public List<PersonEntity> getPersonDetails(@RequestParam (value = "query", required = false) String query ){
+        return crudService.getPersonDetails(query.toLowerCase());
+    }
+
 }
