@@ -3,10 +3,7 @@ package io.endeavour.stocks.controller;
 import io.endeavour.stocks.entity.StockFundamentalsEntity;
 import io.endeavour.stocks.entity.StockPriceHistoryEntity;
 import io.endeavour.stocks.service.StockAnalyticsService;
-import io.endeavour.stocks.vo.SectorLookup;
-import io.endeavour.stocks.vo.SectorLookupHistory;
-import io.endeavour.stocks.vo.StockFundamentalsHistory;
-import io.endeavour.stocks.vo.StocksPriceHistory;
+import io.endeavour.stocks.vo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,6 +107,11 @@ public class StockAnalyticsController {
                                                     @PathVariable("toDate")
                                                         @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate toDate) {
         return stockAnalyticsService.getSectorLookupHistory(num, fromDate, toDate);
+    }
+
+    @GetMapping("/sub-sec-stocks/top/{num}")
+    public  List<TopSubSectors> topSubSecStocks(@PathVariable("num") int num) {
+        return stockAnalyticsService.topSubSectors(num);
     }
 
 }

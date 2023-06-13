@@ -4,24 +4,20 @@ import io.endeavour.stocks.StockException;
 import io.endeavour.stocks.dao.LooksupDao;
 import io.endeavour.stocks.dao.PriceHistoryDao;
 import io.endeavour.stocks.dao.StockFundamentalsDao;
-import io.endeavour.stocks.entity.SectorEntity;
-import io.endeavour.stocks.entity.StockFundamentalsEntity;
-import io.endeavour.stocks.entity.StockPriceHistoryEntity;
-import io.endeavour.stocks.entity.StockPriceHistoryPK;
+import io.endeavour.stocks.entity.*;
 import io.endeavour.stocks.remote.StockCalculationsClient;
 import io.endeavour.stocks.remote.vo.TickerCumulativeReturn;
 import io.endeavour.stocks.remote.vo.TickerList;
 import io.endeavour.stocks.repository.SectorRepository;
 import io.endeavour.stocks.repository.StockFundamentalsRepository;
 import io.endeavour.stocks.repository.StockPriceHistoryRepository;
-import io.endeavour.stocks.vo.SectorLookup;
-import io.endeavour.stocks.vo.SectorLookupHistory;
-import io.endeavour.stocks.vo.StockFundamentalsHistory;
-import io.endeavour.stocks.vo.StocksPriceHistory;
+import io.endeavour.stocks.repository.SubSectorRepository;
+import io.endeavour.stocks.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,6 +31,7 @@ public class StockAnalyticsService {
     private final StockPriceHistoryRepository stockPriceHistoryRepository;
     private final StockCalculationsClient stockCalculationsClient;
     private final SectorRepository sectorRepository;
+    private final SubSectorRepository subSectorRepository;
 
     @Autowired
     public StockAnalyticsService(PriceHistoryDao priceHistoryDao,
@@ -42,7 +39,7 @@ public class StockAnalyticsService {
                                  StockFundamentalsRepository stockFundamentalsRepository,
                                  StockFundamentalsDao stockFundamentalsDao,
                                  StockPriceHistoryRepository stockPriceHistoryRepository,
-                                 StockCalculationsClient stockCalculationsClient, SectorRepository sectorRepository) {
+                                 StockCalculationsClient stockCalculationsClient, SectorRepository sectorRepository, SubSectorRepository subSectorRepository) {
         this.priceHistoryDao = priceHistoryDao;
         this.looksupDao = looksupDao;
         this.stockFundamentalsRepository = stockFundamentalsRepository;
@@ -50,6 +47,7 @@ public class StockAnalyticsService {
         this.stockPriceHistoryRepository = stockPriceHistoryRepository;
         this.stockCalculationsClient = stockCalculationsClient;
         this.sectorRepository = sectorRepository;
+        this.subSectorRepository = subSectorRepository;
     }
 
     public List<StocksPriceHistory> getPriceHistory(List<String> tickerSymbol, LocalDate fromDate, LocalDate toDate) {
@@ -165,6 +163,57 @@ public class StockAnalyticsService {
             sectorLookupHistoryList.add(sectorLookupHistory);
         });
         return sectorLookupHistoryList;
+    }
+
+    public List<SectorEntity> sectorEntityList(){
+        return sectorRepository.findAll();
+    }
+    public List<SubSectorEntity> subSectorEntityList(){
+        return subSectorRepository.findAll();
+    }
+    public List<StockFundamentalsEntity> stockFundamentalsEntityList(){
+        return stockFundamentalsRepository.findAllByMarketCapNotNull();
+    }
+
+    public List<TopSubSectors> topSubSectors (int num){
+        List<TopSubSectors> topSubSectors = new ArrayList<>();
+        List<StockFundamentalsEntity> fundamentalsEntities = stockFundamentalsEntityList();
+        Map<Integer, String> sectorList = sectorEntityList().stream()
+                .collect(Collectors.toMap(SectorEntity::getSectorId, SectorEntity::getSectorName));
+        Map<Integer, String> subSectorList = subSectorEntityList().stream()
+                .collect(Collectors.toMap(SubSectorEntity::getSubSectorId, SubSectorEntity::getSubSectorName));
+        Map<Integer, List<StockFundamentalsEntity>> fundamentalsBySecId = stockFundamentalsEntityList().stream()
+                .collect(Collectors.groupingBy(StockFundamentalsEntity::getSectorId));
+        fundamentalsBySecId.forEach((sectorId,stocksBySectorId)->{
+            TopSubSectors topSubSec = new TopSubSectors();
+            topSubSec.setSectorName(sectorList.get(sectorId));
+            Map<Integer, List<StockFundamentalsEntity>> fundamentalBySubSec = stocksBySectorId.stream()
+                    .collect(Collectors.groupingBy(StockFundamentalsEntity::getSubSectorId));
+            List<TopSubSectorsByAvgMarketCap> topSubSectorsByAvgMarketCaps = new ArrayList<>();
+            fundamentalBySubSec.forEach((subSecId, stocksBySubSecId)->{
+                TopSubSectorsByAvgMarketCap topSubSectorsByAvgMarketCap = new TopSubSectorsByAvgMarketCap();
+                topSubSectorsByAvgMarketCap.setSubSectorName(subSectorList.get(subSecId));
+                List<BigDecimal> marketCap = stocksBySubSecId.stream()
+                        .map(StockFundamentalsEntity::getMarketCap)
+                        .collect(Collectors.toList());
+                BigDecimal sum = BigDecimal.ZERO;
+                BigDecimal avg = BigDecimal.ZERO;
+                for (BigDecimal bigDecimal : marketCap) {
+                    sum = sum.add(bigDecimal);
+                }
+                avg = sum.divide(new BigDecimal(marketCap.size()),3, RoundingMode.HALF_EVEN);
+                topSubSectorsByAvgMarketCap.setAvgMarketCap(avg);
+                topSubSectorsByAvgMarketCaps.add(topSubSectorsByAvgMarketCap);
+            });
+            List<TopSubSectorsByAvgMarketCap> subSectorsByAvgMarketCaps = topSubSectorsByAvgMarketCaps.stream()
+                    .sorted(Comparator.comparing(TopSubSectorsByAvgMarketCap::getAvgMarketCap))
+                    .limit(5)
+                    .collect(Collectors.toList());
+            topSubSec.setTopSubSectorsByAvgMarketCaps(subSectorsByAvgMarketCaps);
+            topSubSectors.add(topSubSec);
+        });
+        return topSubSectors;
+
     }
 
 }

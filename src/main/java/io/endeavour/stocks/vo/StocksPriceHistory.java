@@ -3,7 +3,7 @@ package io.endeavour.stocks.vo;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class StocksPriceHistory {
+public class  StocksPriceHistory {
     public String getTickerSymbol() {
         return tickerSymbol;
     }
